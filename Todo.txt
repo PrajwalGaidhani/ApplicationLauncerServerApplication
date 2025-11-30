@@ -1,0 +1,4 @@
+1. Convert this to background service
+2. lightweight
+3. better ui for phone
+4. more app should be launched

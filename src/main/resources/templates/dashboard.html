@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f23;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0,212,255,0.5);
+        }
+        .back-btn {
+            background: #00d4ff;
+            color: #0f0f23;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #2a2a3e;
+        }
+        .card h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #00d4ff;
+            padding-bottom: 10px;
+        }
+        .stat {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #16162a;
+            border-radius: 6px;
+        }
+        .stat-label { font-weight: 500; color: #b0b0b0; }
+        .stat-value { color: #00ff88; font-weight: bold; }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #16162a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #00d4ff;
+        }
+        .auto-refresh {
+            text-align: center;
+            margin: 20px 0;
+            color: #b0b0b0;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🖥️ PC System Monitor</h1>
+        <a href="/" class="back-btn">← Back Home</a>
+    </div>
+
+    <div class="auto-refresh">Auto-refreshing every 5 seconds</div>
+    <div id="content" class="loading">Loading system stats...</div>
+</div>
+
+<script>
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/system/stats');
+            const data = await response.json();
+            displayStats(data);
+        } catch (error) {
+            document.getElementById('content').innerHTML =
+                '<div class="loading">Error loading stats: ' + error.message + '</div>';
+        }
+    }
+
+    function displayStats(data) {
+        let html = '<div class="grid">';
+
+        // CPU Card
+        html += `<div class='card'>
+                <h2>⚡ CPU</h2>
+                <div class='stat'><span class='stat-label'>Model:</span><span class='stat-value'>${data.cpu.model}</span></div>
+                <div class='stat'><span class='stat-label'>Cores:</span><span class='stat-value'>${data.cpu.cores} (${data.cpu.physicalCores} physical)</span></div>
+                <div class='stat'><span class='stat-label'>Max Frequency:</span><span class='stat-value'>${data.cpu.maxFreq}</span></div>
+                <div class='stat'><span class='stat-label'>Usage:</span><span class='stat-value'>${data.cpu.usage}%</span></div>
+                <div class='progress-bar'><div class='progress-fill' style='width: ${data.cpu.usage}%'>${data.cpu.usage}%</div></div>
+            </div>`;
+
+        // Memory Card
+        html += `<div class='card'>
+                <h2>💾 Memory</h2>
+                <div class='stat'><span class='stat-label'>Total:</span><span class='stat-value'>${data.memory.total}</span></div>
+                <div class='stat'><span class='stat-label'>Used:</span><span class='stat-value'>${data.memory.used}</span></div>
+                <div class='stat'><span class='stat-label'>Available:</span><span class='stat-value'>${data.memory.available}</span></div>
+                <div class='stat'><span class='stat-label'>Usage:</span><span class='stat-value'>${data.memory.usagePercent}%</span></div>
+                <div class='progress-bar'><div class='progress-fill' style='width: ${data.memory.usagePercent}%'>${data.memory.usagePercent}%</div></div>
+            </div>`;
+
+        // System Info Card
+        html += `<div class='card'>
+                <h2>🖥️ System Info</h2>
+                <div class='stat'><span class='stat-label'>OS:</span><span class='stat-value'>${data.system.os}</span></div>
+                <div class='stat'><span class='stat-label'>Uptime:</span><span class='stat-value'>${data.system.uptime}</span></div>
+                <div class='stat'><span class='stat-label'>Processes:</span><span class='stat-value'>${data.system.processes}</span></div>
+                <div class='stat'><span class='stat-label'>Threads:</span><span class='stat-value'>${data.system.threads}</span></div>
+            </div>`;
+
+        // Battery (if available)
+        if (data.battery) {
+            html += `<div class='card'>
+                    <h2>🔋 Battery</h2>
+                    <div class='stat'><span class='stat-label'>Level:</span><span class='stat-value'>${Math.round(data.battery.percentage)}%</span></div>
+                    <div class='stat'><span class='stat-label'>Status:</span><span class='stat-value'>${data.battery.charging ? 'Charging' : 'On Battery'}</span></div>
+                    <div class='progress-bar'><div class='progress-fill' style='width: ${data.battery.percentage}%'>${Math.round(data.battery.percentage)}%</div></div>
+                </div>`;
+        }
+
+        html += '</div>';
+        document.getElementById('content').innerHTML = html;
+    }
+
+    // Load stats on page load
+    loadStats();
+
+    // Auto-refresh every 5 seconds
+    setInterval(loadStats, 5000);
+</script>
+</body>
+</html>
